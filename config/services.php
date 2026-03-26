@@ -35,4 +35,10 @@ return [
         ],
     ],
 
+    'receita_cnpj' => [
+        'base_url' => env('RECEITA_CNPJ_BASE_URL', 'https://www.receitaws.com.br/v1/cnpj'),
+        'token' => env('RECEITA_CNPJ_TOKEN'),
+        'timeout' => env('RECEITA_CNPJ_TIMEOUT', 10),
+    ],
+
 ];

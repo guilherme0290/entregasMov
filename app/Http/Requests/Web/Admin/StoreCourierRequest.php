@@ -15,23 +15,23 @@ class StoreCourierRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['nullable', 'email', 'max:255', 'unique:users,email'],
+            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
             'phone' => ['required', 'string', 'max:20', 'unique:users,phone'],
             'password' => ['required', 'string', 'min:6'],
             'tax_id' => ['required', 'string', 'max:20', 'unique:couriers,tax_id'],
             'birth_date' => ['nullable', 'date'],
             'address' => ['required', 'string', 'max:255'],
             'number' => ['nullable', 'string', 'max:20'],
-            'district' => ['nullable', 'string', 'max:255'],
+            'district' => ['required', 'string', 'max:255'],
             'city' => ['required', 'string', 'max:255'],
             'state' => ['required', 'string', 'size:2'],
-            'zip_code' => ['nullable', 'string', 'max:10'],
+            'zip_code' => ['required', 'string', 'max:10'],
             'complement' => ['nullable', 'string', 'max:255'],
             'notes' => ['nullable', 'string'],
-            'vehicle_type' => ['nullable', 'string', 'max:30'],
+            'vehicle_type' => ['required', 'string', 'in:moto,carro'],
             'vehicle_model' => ['nullable', 'string', 'max:255'],
             'vehicle_plate' => ['nullable', 'string', 'max:10'],
-            'availability_status' => ['required', 'string', 'in:online,offline,busy,blocked'],
+            'availability_status' => ['nullable', 'string', 'in:online,offline,busy,blocked'],
             'is_active' => ['nullable', 'boolean'],
         ];
     }

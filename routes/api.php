@@ -33,6 +33,7 @@ Route::prefix('v1')->group(function () {
         Route::get('/deliveries', [AdminDeliveryController::class, 'index']);
         Route::get('/deliveries/{delivery}', [AdminDeliveryController::class, 'show']);
         Route::post('/deliveries/{delivery}/assign-courier', [AdminDeliveryController::class, 'assignCourier']);
+        Route::post('/deliveries/{delivery}/transfer-courier', [AdminDeliveryController::class, 'transferCourier']);
         Route::get('/reports/deliveries', [AdminReportController::class, 'deliveries']);
         Route::get('/reports/partners', [AdminReportController::class, 'partners']);
         Route::get('/reports/couriers', [AdminReportController::class, 'couriers']);

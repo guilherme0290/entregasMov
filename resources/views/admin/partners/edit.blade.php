@@ -4,7 +4,7 @@
 @extends('layouts.admin')
 
 @section('content')
-    <form method="POST" action="{{ route('admin.partners.update', $partner) }}">
+    <form method="POST" action="{{ route('admin.partners.update', $partner) }}" autocomplete="off">
         @csrf
         @method('PUT')
         @php

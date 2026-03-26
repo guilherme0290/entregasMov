@@ -7,6 +7,7 @@ use App\Enums\DeliveryStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Web\Admin\AssignCourierRequest;
 use App\Http\Requests\Web\Admin\StoreDeliveryRequest;
+use App\Http\Requests\Web\Admin\TransferCourierRequest;
 use App\Http\Requests\Web\Admin\UpdateDeliveryRequest;
 use App\Models\Courier;
 use App\Models\Delivery;
@@ -114,7 +115,15 @@ class DeliveryController extends Controller
     public function show(Delivery $delivery): View
     {
         abort_unless($delivery->company_id === auth()->user()->company_id, 404);
-        $delivery->load(['partner.user', 'courier.user', 'statusLogs.user', 'earning']);
+        $delivery->load([
+            'partner.user',
+            'courier.user',
+            'statusLogs.user',
+            'earning',
+            'transfers.previousCourier.user',
+            'transfers.newCourier.user',
+            'transfers.transferredBy',
+        ]);
 
         $couriers = Courier::query()
             ->where('company_id', auth()->user()->company_id)
@@ -125,8 +134,9 @@ class DeliveryController extends Controller
 
         $canAssignCourier = in_array($delivery->status, [DeliveryStatus::Pending, DeliveryStatus::Available], true);
         $canManageDelivery = $this->canManageDelivery($delivery);
+        $canTransferCourier = in_array($delivery->status, [DeliveryStatus::Accepted, DeliveryStatus::InPickup, DeliveryStatus::InTransit], true);
 
-        return view('admin.deliveries.show', compact('delivery', 'couriers', 'canAssignCourier', 'canManageDelivery'));
+        return view('admin.deliveries.show', compact('delivery', 'couriers', 'canAssignCourier', 'canManageDelivery', 'canTransferCourier'));
     }
 
     public function assignCourier(AssignCourierRequest $request, Delivery $delivery): RedirectResponse
@@ -154,6 +164,25 @@ class DeliveryController extends Controller
         $this->workflow->cancel($delivery, $request->user(), $request->input('reason'));
 
         return redirect()->route('admin.deliveries.show', $delivery)->with('status', 'Entrega cancelada com sucesso.');
+    }
+
+    public function transferCourier(TransferCourierRequest $request, Delivery $delivery): RedirectResponse
+    {
+        abort_unless($delivery->company_id === $request->user()->company_id, 404);
+
+        $courier = Courier::query()
+            ->where('company_id', $request->user()->company_id)
+            ->findOrFail($request->integer('courier_id'));
+
+        $this->workflow->transferCourier(
+            $delivery,
+            $courier,
+            $request->user(),
+            $request->string('reason')->toString(),
+            $request->filled('notes') ? $request->string('notes')->toString() : null,
+        );
+
+        return redirect()->route('admin.deliveries.show', $delivery)->with('status', 'Entregador trocado com sucesso.');
     }
 
     private function canManageDelivery(Delivery $delivery): bool

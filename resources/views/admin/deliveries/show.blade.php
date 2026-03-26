@@ -96,6 +96,31 @@
                     @endforelse
                 </div>
             </article>
+
+            <article class="rounded-[28px] bg-white p-6 shadow-sm ring-1 ring-slate-200">
+                <h3 class="text-xl font-semibold text-slate-950">Trocas de Entregador</h3>
+                <div class="mt-6 space-y-4">
+                    @forelse ($delivery->transfers->sortByDesc('created_at') as $transfer)
+                        <div class="rounded-2xl bg-slate-50 p-4">
+                            <div class="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+                                <div class="font-medium text-slate-950">
+                                    {{ $transfer->previousCourier?->user?->name ?? 'Sem entregador' }}
+                                    →
+                                    {{ $transfer->newCourier?->user?->name ?? 'Sem entregador' }}
+                                </div>
+                                <div class="text-sm text-slate-500">{{ $transfer->created_at?->format('d/m/Y H:i') }}</div>
+                            </div>
+                            <div class="mt-2 text-sm text-slate-600">Motivo: {{ $transfer->reason }}</div>
+                            <div class="mt-1 text-sm text-slate-500">Por {{ $transfer->transferredBy?->name ?? 'Sistema' }}</div>
+                            @if ($transfer->notes)
+                                <div class="mt-2 text-sm text-slate-600">{{ $transfer->notes }}</div>
+                            @endif
+                        </div>
+                    @empty
+                        <div class="rounded-2xl bg-slate-50 p-4 text-sm text-slate-500">Nenhuma troca registrada.</div>
+                    @endforelse
+                </div>
+            </article>
         </section>
 
         <section class="space-y-6">
@@ -162,6 +187,38 @@
                             <textarea name="reason" rows="3" class="w-full rounded-2xl border border-slate-200 px-4 py-3" placeholder="Informe o motivo do cancelamento"></textarea>
                         </div>
                         <button type="submit" class="w-full rounded-2xl bg-rose-600 px-4 py-3 text-sm font-medium text-white">Cancelar entrega</button>
+                    </form>
+                </article>
+            @endif
+
+            @if ($canTransferCourier)
+                <article class="rounded-[28px] bg-white p-6 shadow-sm ring-1 ring-slate-200">
+                    <h3 class="text-xl font-semibold text-slate-950">Trocar Entregador</h3>
+                    <p class="mt-2 text-sm text-slate-500">Use esta ação de contingência para transferir a corrida em andamento para outro entregador.</p>
+
+                    <form method="POST" action="{{ route('admin.deliveries.transfer-courier', $delivery) }}" class="mt-6 space-y-4">
+                        @csrf
+                        <div>
+                            <label class="mb-2 block text-sm font-medium text-slate-700">Novo entregador</label>
+                            <select name="courier_id" class="w-full rounded-2xl border border-slate-200 px-4 py-3">
+                                <option value="">Selecione</option>
+                                @foreach ($couriers as $courier)
+                                    @continue($courier->id === $delivery->courier_id)
+                                    <option value="{{ $courier->id }}">
+                                        {{ $courier->user->name }} · {{ $courier->availability_status->value }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div>
+                            <label class="mb-2 block text-sm font-medium text-slate-700">Motivo</label>
+                            <input name="reason" class="w-full rounded-2xl border border-slate-200 px-4 py-3" placeholder="Ex.: acidente, pane, mal súbito">
+                        </div>
+                        <div>
+                            <label class="mb-2 block text-sm font-medium text-slate-700">Observações</label>
+                            <textarea name="notes" rows="3" class="w-full rounded-2xl border border-slate-200 px-4 py-3" placeholder="Informe detalhes operacionais da troca"></textarea>
+                        </div>
+                        <button type="submit" class="w-full rounded-2xl bg-amber-600 px-4 py-3 text-sm font-medium text-white">Trocar entregador</button>
                     </form>
                 </article>
             @endif

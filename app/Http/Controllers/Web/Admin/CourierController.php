@@ -58,6 +58,24 @@ class CourierController extends Controller
         return view('admin.couriers.create');
     }
 
+    public function show(Courier $courier): View
+    {
+        abort_unless($courier->company_id === auth()->user()->company_id, 404);
+
+        $courier->load('user');
+        $courier->loadCount('deliveries');
+        $courier->loadCount([
+            'deliveries as today_deliveries_count' => fn ($query) => $query->whereDate('created_at', today()),
+        ]);
+
+        $courier->setAttribute(
+            'display_rating',
+            number_format(min(5, max(4.5, 4.5 + ($courier->deliveries_count / 1000))), 1)
+        );
+
+        return view('admin.couriers.show', compact('courier'));
+    }
+
     public function store(StoreCourierRequest $request): RedirectResponse
     {
         DB::transaction(function () use ($request) {
@@ -87,7 +105,7 @@ class CourierController extends Controller
                 'vehicle_type' => $request->string('vehicle_type') ?: null,
                 'vehicle_model' => $request->string('vehicle_model') ?: null,
                 'vehicle_plate' => $request->string('vehicle_plate') ?: null,
-                'availability_status' => CourierAvailabilityStatus::from($request->input('availability_status')),
+                'availability_status' => CourierAvailabilityStatus::from($request->input('availability_status', CourierAvailabilityStatus::Offline->value)),
                 'last_status_at' => now(),
                 'is_active' => $request->boolean('is_active', true),
             ]);
@@ -136,7 +154,7 @@ class CourierController extends Controller
                 'vehicle_type' => $request->string('vehicle_type') ?: null,
                 'vehicle_model' => $request->string('vehicle_model') ?: null,
                 'vehicle_plate' => $request->string('vehicle_plate') ?: null,
-                'availability_status' => CourierAvailabilityStatus::from($request->input('availability_status')),
+                'availability_status' => CourierAvailabilityStatus::from($request->input('availability_status', $courier->availability_status->value)),
                 'last_status_at' => now(),
                 'is_active' => $request->boolean('is_active', true),
             ]);

@@ -5,6 +5,7 @@ use App\Http\Controllers\Web\Admin\CourierEarningController as AdminCourierEarni
 use App\Http\Controllers\Web\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Web\Admin\DeliveryController as AdminDeliveryController;
 use App\Http\Controllers\Web\Admin\PartnerController as AdminPartnerController;
+use App\Http\Controllers\Web\Admin\PartnerLookupController as AdminPartnerLookupController;
 use App\Http\Controllers\Web\Admin\ReportController as AdminReportController;
 use App\Http\Controllers\Web\Auth\LoginController;
 use App\Http\Controllers\Web\Partner\DeliveryController as PartnerDeliveryController;
@@ -27,11 +28,13 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->name('admin.')->grou
     Route::get('reports', AdminReportController::class)->name('reports.index');
     Route::resource('deliveries', AdminDeliveryController::class)->only(['index', 'create', 'store', 'show', 'edit', 'update']);
     Route::post('deliveries/{delivery}/assign-courier', [AdminDeliveryController::class, 'assignCourier'])->name('deliveries.assign-courier');
+    Route::post('deliveries/{delivery}/transfer-courier', [AdminDeliveryController::class, 'transferCourier'])->name('deliveries.transfer-courier');
     Route::post('deliveries/{delivery}/cancel', [AdminDeliveryController::class, 'cancel'])->name('deliveries.cancel');
     Route::get('earnings', [AdminCourierEarningController::class, 'index'])->name('earnings.index');
     Route::put('earnings/{earning}', [AdminCourierEarningController::class, 'update'])->name('earnings.update');
+    Route::post('partners/cnpj-lookup', AdminPartnerLookupController::class)->name('partners.cnpj-lookup');
     Route::resource('partners', AdminPartnerController::class)->except(['show', 'destroy']);
-    Route::resource('couriers', AdminCourierController::class)->except(['show', 'destroy']);
+    Route::resource('couriers', AdminCourierController::class)->except(['destroy']);
 });
 
 Route::prefix('partner')->middleware(['auth', 'role:partner'])->name('partner.')->group(function () {

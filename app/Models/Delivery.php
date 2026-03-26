@@ -101,6 +101,11 @@ class Delivery extends Model
         return $this->hasMany(DeliveryRejection::class);
     }
 
+    public function transfers(): HasMany
+    {
+        return $this->hasMany(DeliveryTransfer::class);
+    }
+
     public function earning(): HasOne
     {
         return $this->hasOne(CourierEarning::class);
