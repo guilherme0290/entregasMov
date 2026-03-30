@@ -4,7 +4,7 @@
 @extends('layouts.admin')
 
 @section('content')
-    <form method="POST" action="{{ route('admin.partners.store') }}">
+    <form method="POST" action="{{ route('admin.partners.store') }}" autocomplete="off">
         @csrf
         @php
             $submitLabel = 'Cadastrar parceiro';

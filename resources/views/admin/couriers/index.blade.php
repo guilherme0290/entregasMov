@@ -38,69 +38,71 @@
         </div>
     </div>
 
-    <div class="mt-6 grid gap-5 xl:grid-cols-3">
-        @forelse ($couriers as $courier)
-            @php
-                $status = $courier->availability_status->value;
-                $statusLabel = match ($status) {
-                    'online' => 'Online',
-                    'offline' => 'Offline',
-                    'busy' => 'Ocupado',
-                    'blocked' => 'Bloqueado',
-                };
-                $statusColor = match ($status) {
-                    'online' => 'bg-emerald-400',
-                    'offline' => 'bg-slate-300',
-                    'busy' => 'bg-amber-400',
-                    'blocked' => 'bg-rose-400',
-                };
-            @endphp
-
-            <article class="rounded-[22px] bg-white p-5 shadow-sm ring-1 ring-slate-200">
-                <div class="flex items-start justify-between gap-4">
-                    <div class="flex items-center gap-4">
-                        <div class="flex h-12 w-12 items-center justify-center rounded-full bg-[#edf2ff] text-base font-semibold text-[#335ec4]">
-                            {{ $courier->initials }}
-                        </div>
-                        <div>
-                            <h2 class="text-[26px] font-semibold leading-none text-slate-900">{{ $courier->user->name }}</h2>
-                            <p class="mt-1 text-sm text-slate-500">{{ $courier->user->phone }}</p>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-2 text-sm text-slate-500">
-                        <span class="h-2.5 w-2.5 rounded-full {{ $statusColor }}"></span>
-                        <span>{{ $statusLabel }}</span>
-                    </div>
-                </div>
-
-                <div class="mt-5 grid grid-cols-3 gap-3 text-center text-sm">
-                    <div class="rounded-2xl bg-[#f6f7fb] px-4 py-3">
-                        <div class="text-slate-500">Hoje</div>
-                        <div class="mt-1 text-[28px] font-semibold leading-none text-slate-900">{{ $courier->today_deliveries_count }}</div>
-                    </div>
-                    <div class="rounded-2xl bg-[#f6f7fb] px-4 py-3">
-                        <div class="text-slate-500">Total</div>
-                        <div class="mt-1 text-[28px] font-semibold leading-none text-slate-900">{{ $courier->deliveries_count }}</div>
-                    </div>
-                    <div class="rounded-2xl bg-[#f6f7fb] px-4 py-3">
-                        <div class="text-slate-500">Avaliação</div>
-                        <div class="mt-1 flex items-center justify-center gap-1 text-[26px] font-semibold leading-none text-slate-900">
-                            <span class="text-[20px] text-amber-400">★</span>
-                            <span>{{ $courier->display_rating }}</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="mt-5 flex items-center justify-between">
-                    <div class="text-sm text-slate-500">
-                        {{ $courier->vehicle_type ?: 'Veículo não informado' }}
-                    </div>
-                    <a href="{{ route('admin.couriers.edit', $courier) }}" class="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-50">Editar</a>
-                </div>
-            </article>
-        @empty
-            <div class="col-span-full rounded-[22px] bg-white p-8 text-center text-slate-500 shadow-sm ring-1 ring-slate-200">Nenhum entregador cadastrado.</div>
-        @endforelse
+    <div class="mt-6 overflow-hidden rounded-[22px] bg-white shadow-sm ring-1 ring-slate-200">
+        <div class="overflow-x-auto">
+            <table class="min-w-full text-left text-sm">
+                <thead class="bg-slate-50 text-slate-500">
+                    <tr>
+                        <th class="px-6 py-4 font-medium">Entregador</th>
+                        <th class="px-6 py-4 font-medium">Telefone</th>
+                        <th class="px-6 py-4 font-medium">Status</th>
+                        <th class="px-6 py-4 font-medium">Hoje</th>
+                        <th class="px-6 py-4 font-medium">Total</th>
+                        <th class="px-6 py-4 font-medium">Veículo</th>
+                        <th class="px-6 py-4 font-medium">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse ($couriers as $courier)
+                        @php
+                            $status = $courier->availability_status->value;
+                            $statusLabel = match ($status) {
+                                'online' => 'Online',
+                                'offline' => 'Offline',
+                                'busy' => 'Ocupado',
+                                'blocked' => 'Bloqueado',
+                            };
+                            $statusClass = match ($status) {
+                                'online' => 'bg-emerald-50 text-emerald-600',
+                                'offline' => 'bg-slate-100 text-slate-600',
+                                'busy' => 'bg-amber-50 text-amber-600',
+                                'blocked' => 'bg-rose-50 text-rose-600',
+                            };
+                        @endphp
+                        <tr class="border-t border-slate-100">
+                            <td class="px-6 py-5">
+                                <div class="flex items-center gap-4">
+                                    <div class="flex h-11 w-11 items-center justify-center rounded-full bg-[#edf2ff] text-sm font-semibold text-[#335ec4]">
+                                        {{ $courier->initials }}
+                                    </div>
+                                    <div>
+                                        <div class="font-medium text-slate-900">{{ $courier->user->name }}</div>
+                                        <div class="mt-1 text-xs text-slate-500">{{ $courier->user->email ?: 'Sem e-mail' }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-5 text-slate-600">{{ $courier->user->phone ?: 'Não informado' }}</td>
+                            <td class="px-6 py-5">
+                                <span class="rounded-full px-3 py-1 text-xs font-medium {{ $statusClass }}">{{ $statusLabel }}</span>
+                            </td>
+                            <td class="px-6 py-5 text-slate-900">{{ $courier->today_deliveries_count }}</td>
+                            <td class="px-6 py-5 text-slate-900">{{ $courier->deliveries_count }}</td>
+                            <td class="px-6 py-5 text-slate-600">{{ $courier->vehicle_type ?: 'Não informado' }}</td>
+                            <td class="px-6 py-5">
+                                <div class="flex items-center gap-2">
+                                    <a href="{{ route('admin.couriers.show', $courier) }}" class="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-50">Visualizar</a>
+                                    <a href="{{ route('admin.couriers.edit', $courier) }}" class="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-50">Editar</a>
+                                </div>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="7" class="px-6 py-8 text-center text-slate-500">Nenhum entregador cadastrado.</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
     </div>
 
     <div class="mt-6">

@@ -9,6 +9,7 @@ use App\Models\Courier;
 use App\Models\Delivery;
 use App\Models\DeliveryRejection;
 use App\Models\DeliveryStatusLog;
+use App\Models\DeliveryTransfer;
 use App\Models\Partner;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -112,6 +113,96 @@ class DeliveryWorkflowService
             $this->log($delivery, $previousStatus, DeliveryStatus::Accepted, $user, 'Entregador atribuído manualmente pelo admin.');
 
             return $delivery->fresh(['partner', 'courier.user', 'statusLogs.user', 'earning']);
+        });
+    }
+
+    public function transferCourier(Delivery $delivery, Courier $newCourier, User $user, string $reason, ?string $notes = null): Delivery
+    {
+        abort_unless(in_array($delivery->status->value, [
+            DeliveryStatus::Accepted->value,
+            DeliveryStatus::InPickup->value,
+            DeliveryStatus::InTransit->value,
+        ], true), 422, 'Entrega não pode ter o entregador trocado neste status.');
+        abort_unless($delivery->courier_id !== null, 422, 'Entrega precisa ter um entregador atual para ser transferida.');
+        abort_unless($newCourier->is_active, 422, 'Novo entregador inativo.');
+        abort_unless($newCourier->availability_status->value === CourierAvailabilityStatus::Online->value, 422, 'Novo entregador precisa estar online.');
+        abort_if($delivery->courier_id === $newCourier->id, 422, 'Selecione um entregador diferente do atual.');
+
+        return DB::transaction(function () use ($delivery, $newCourier, $user, $reason, $notes) {
+            $lockedDelivery = Delivery::query()
+                ->whereKey($delivery->id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            $previousCourier = Courier::query()
+                ->whereKey($lockedDelivery->courier_id)
+                ->lockForUpdate()
+                ->first();
+
+            $lockedNewCourier = Courier::query()
+                ->whereKey($newCourier->id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            abort_unless(in_array($lockedDelivery->status->value, [
+                DeliveryStatus::Accepted->value,
+                DeliveryStatus::InPickup->value,
+                DeliveryStatus::InTransit->value,
+            ], true), 422, 'Entrega não pode ter o entregador trocado neste status.');
+            abort_unless($lockedDelivery->courier_id !== null, 422, 'Entrega precisa ter um entregador atual para ser transferida.');
+            abort_unless($lockedNewCourier->is_active, 422, 'Novo entregador inativo.');
+            abort_unless($lockedNewCourier->availability_status->value === CourierAvailabilityStatus::Online->value, 422, 'Novo entregador precisa estar online.');
+            abort_if($lockedDelivery->courier_id === $lockedNewCourier->id, 422, 'Selecione um entregador diferente do atual.');
+
+            $lockedDelivery->update([
+                'courier_id' => $lockedNewCourier->id,
+            ]);
+
+            $lockedNewCourier->update([
+                'availability_status' => CourierAvailabilityStatus::Busy,
+                'last_status_at' => now(),
+            ]);
+
+            if ($previousCourier) {
+                $previousCourier->update([
+                    'availability_status' => $this->hasOpenDeliveries($previousCourier, $lockedDelivery->id)
+                        ? CourierAvailabilityStatus::Busy
+                        : CourierAvailabilityStatus::Online,
+                    'last_status_at' => now(),
+                ]);
+            }
+
+            DeliveryTransfer::create([
+                'delivery_id' => $lockedDelivery->id,
+                'previous_courier_id' => $previousCourier?->id,
+                'new_courier_id' => $lockedNewCourier->id,
+                'transferred_by_user_id' => $user->id,
+                'reason' => $reason,
+                'notes' => $notes,
+            ]);
+
+            $message = 'Entregador trocado de '
+                .($previousCourier?->loadMissing('user')->user?->name ?? 'não atribuído')
+                .' para '
+                .$lockedNewCourier->loadMissing('user')->user?->name
+                .'. Motivo: '.$reason;
+
+            if ($notes) {
+                $message .= ' Observações: '.$notes;
+            }
+
+            $this->log($lockedDelivery, $lockedDelivery->status, $lockedDelivery->status, $user, $message);
+            $this->courierNotificationService->notifyTransferredDelivery($lockedDelivery->loadMissing('partner'), $lockedNewCourier, $reason);
+
+            return $lockedDelivery->fresh([
+                'partner',
+                'courier.user',
+                'statusLogs.user',
+                'earning',
+                'transfers.previousCourier.user',
+                'transfers.newCourier.user',
+                'transfers.transferredBy',
+            ]);
         });
     }
 
@@ -233,6 +324,19 @@ class DeliveryWorkflowService
             'user_id' => $user->id,
             'notes' => $notes,
         ]);
+    }
+
+    private function hasOpenDeliveries(Courier $courier, int $excludedDeliveryId): bool
+    {
+        return Delivery::query()
+            ->where('courier_id', $courier->id)
+            ->whereKeyNot($excludedDeliveryId)
+            ->whereIn('status', [
+                DeliveryStatus::Accepted->value,
+                DeliveryStatus::InPickup->value,
+                DeliveryStatus::InTransit->value,
+            ])
+            ->exists();
     }
 
     private function generateCode(): string
