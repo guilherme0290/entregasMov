@@ -1,6 +1,19 @@
 @extends('layouts.partner')
 
 @section('content')
+    @php
+        $statusLabels = [
+            'pending' => 'Pendente',
+            'available' => 'Disponível',
+            'accepted' => 'Aceita',
+            'in_pickup' => 'Coletada',
+            'in_transit' => 'Em trânsito',
+            'delivered' => 'Entregue',
+            'canceled' => 'Cancelada',
+            'rejected' => 'Recusada',
+        ];
+    @endphp
+
     @if ($currentTab === 'new')
         <section class="mx-auto max-w-[736px] rounded-[20px] bg-white p-6 shadow-sm ring-1 ring-slate-200 lg:p-8">
             <h1 class="text-[18px] font-semibold text-slate-900">Solicitar Nova Entrega</h1>
@@ -106,7 +119,7 @@
                                 <td class="px-6 py-5">{{ $delivery->courier?->user?->name ?? 'Não atribuído' }}</td>
                                 <td class="px-6 py-5">R$ {{ number_format($delivery->delivery_fee, 2, ',', '.') }}</td>
                                 <td class="px-6 py-5">
-                                    <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">{{ $delivery->status->value }}</span>
+                                    <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">{{ $statusLabels[$delivery->status->value] ?? str($delivery->status->value)->headline() }}</span>
                                 </td>
                             </tr>
                         @empty

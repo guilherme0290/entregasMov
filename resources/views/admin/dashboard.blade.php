@@ -1,5 +1,15 @@
 @php
     $pageTitle = 'Visão Geral';
+    $statusLabels = [
+        'pending' => 'Pendente',
+        'available' => 'Disponível',
+        'accepted' => 'Aceita',
+        'in_pickup' => 'Coletada',
+        'in_transit' => 'Em trânsito',
+        'delivered' => 'Entregue',
+        'canceled' => 'Cancelada',
+        'rejected' => 'Recusada',
+    ];
 @endphp
 @extends('layouts.admin')
 
@@ -115,7 +125,7 @@
                         </div>
                         <div class="flex items-center gap-4">
                             <div class="text-lg font-semibold text-slate-800">R$ {{ number_format($delivery->delivery_fee, 0, ',', '.') }}</div>
-                            <span class="rounded-full bg-amber-50 px-3 py-1 text-sm font-medium text-amber-500">{{ str($delivery->status->value)->headline() }}</span>
+                            <span class="rounded-full bg-amber-50 px-3 py-1 text-sm font-medium text-amber-500">{{ $statusLabels[$delivery->status->value] ?? str($delivery->status->value)->headline() }}</span>
                         </div>
                     </div>
                 @empty

@@ -1,5 +1,11 @@
 @php
     $pageTitle = 'Ganhos dos Entregadores';
+    $paymentStatusLabels = [
+        'pending' => 'Pendente',
+        'released' => 'Liberado',
+        'paid' => 'Pago',
+        'blocked' => 'Bloqueado',
+    ];
 @endphp
 @extends('layouts.admin')
 
@@ -24,7 +30,7 @@
             <select name="payment_status" class="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm">
                 <option value="">Todos os status</option>
                 @foreach (['pending', 'released', 'paid', 'blocked'] as $status)
-                    <option value="{{ $status }}" @selected(request('payment_status') === $status)>{{ $status }}</option>
+                    <option value="{{ $status }}" @selected(request('payment_status') === $status)>{{ $paymentStatusLabels[$status] }}</option>
                 @endforeach
             </select>
             <button type="submit" class="ml-2 rounded-2xl border border-slate-200 px-4 py-3 text-sm font-medium text-slate-700">Filtrar</button>
@@ -52,7 +58,7 @@
                             <td class="px-6 py-5">{{ $earning->delivery->partner->trade_name }}</td>
                             <td class="px-6 py-5">R$ {{ number_format($earning->net_amount, 2, ',', '.') }}</td>
                             <td class="px-6 py-5">
-                                <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">{{ $earning->payment_status->value }}</span>
+                                <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">{{ $paymentStatusLabels[$earning->payment_status->value] ?? $earning->payment_status->value }}</span>
                             </td>
                             <td class="px-6 py-5">
                                 <form method="POST" action="{{ route('admin.earnings.update', $earning) }}" class="flex items-center gap-2">
@@ -60,7 +66,7 @@
                                     @method('PUT')
                                     <select name="payment_status" class="rounded-2xl border border-slate-200 px-3 py-2 text-sm">
                                         @foreach (['pending', 'released', 'paid', 'blocked'] as $status)
-                                            <option value="{{ $status }}" @selected($earning->payment_status->value === $status)>{{ $status }}</option>
+                                            <option value="{{ $status }}" @selected($earning->payment_status->value === $status)>{{ $paymentStatusLabels[$status] }}</option>
                                         @endforeach
                                     </select>
                                     <button type="submit" class="rounded-2xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700">Salvar</button>

@@ -63,7 +63,7 @@
             </article>
 
             <article class="rounded-[28px] bg-white p-6 shadow-sm ring-1 ring-slate-200">
-                <h3 class="text-xl font-semibold text-slate-950">Timeline</h3>
+                <h3 class="text-xl font-semibold text-slate-950">Linha do tempo</h3>
                 <div class="mt-6 space-y-4">
                     @forelse ($delivery->statusLogs as $log)
                         <div class="flex gap-4">
