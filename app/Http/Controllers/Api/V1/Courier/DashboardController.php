@@ -25,6 +25,9 @@ class DashboardController extends Controller
                 ->count(),
             'deliveries_today' => $courier->deliveries()->whereDate('created_at', today())->count(),
             'earnings_today' => $courier->earnings()->whereDate('created_at', today())->sum('net_amount'),
+            'total_balance' => $courier->earnings()
+                ->where('company_id', $request->user()->company_id)
+                ->sum('net_amount'),
             'unread_notifications' => $request->user()
                 ->systemNotifications()
                 ->where('company_id', $request->user()->company_id)

@@ -9,19 +9,21 @@ use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\Courier\DashboardController as CourierDashboardController;
 use App\Http\Controllers\Api\V1\Courier\DeliveryController as CourierDeliveryController;
 use App\Http\Controllers\Api\V1\Courier\NotificationController as CourierNotificationController;
+use App\Http\Controllers\Api\V1\Courier\ProfileController as CourierProfileController;
 use App\Http\Controllers\Api\V1\Courier\StatusController as CourierStatusController;
 use App\Http\Controllers\Api\V1\Partner\DashboardController as PartnerDashboardController;
 use App\Http\Controllers\Api\V1\Partner\DeliveryController as PartnerDeliveryController;
 use Illuminate\Support\Facades\Route;
 
-Route::prefix('v1')->group(function () {
-    Route::prefix('auth')->group(function () {
-        Route::post('/login', [AuthController::class, 'login']);
+    Route::prefix('v1')->group(function () {
+        Route::prefix('auth')->group(function () {
+            Route::post('/login', [AuthController::class, 'login']);
+            Route::post('/register-driver', [AuthController::class, 'registerDriver']);
 
-        Route::middleware('auth:sanctum')->group(function () {
-            Route::post('/logout', [AuthController::class, 'logout']);
-            Route::get('/me', [AuthController::class, 'me']);
-        });
+            Route::middleware('auth:sanctum')->group(function () {
+                Route::post('/logout', [AuthController::class, 'logout']);
+                Route::get('/me', [AuthController::class, 'me']);
+            });
     });
 
     Route::prefix('admin')->middleware(['auth:sanctum', 'role:admin'])->group(function () {
@@ -52,6 +54,8 @@ Route::prefix('v1')->group(function () {
         Route::get('/notifications', [CourierNotificationController::class, 'index']);
         Route::post('/notifications/{notification}/read', [CourierNotificationController::class, 'markAsRead']);
         Route::patch('/status', [CourierStatusController::class, 'update']);
+        Route::patch('/profile', [CourierProfileController::class, 'updateProfile']);
+        Route::patch('/vehicle', [CourierProfileController::class, 'updateVehicle']);
         Route::get('/deliveries/available', [CourierDeliveryController::class, 'available']);
         Route::get('/deliveries/mine', [CourierDeliveryController::class, 'mine']);
         Route::get('/deliveries/{delivery}', [CourierDeliveryController::class, 'show']);
